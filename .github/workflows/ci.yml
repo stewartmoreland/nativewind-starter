@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - run: yarn install --immutable
+
+      # Pinned, never `latest`: a floating CLI changes the diff engine.
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.113.0
+
+      - run: supabase start
+      - run: supabase db reset
+      - run: node scripts/seed-auth.mjs
+
+      - name: RLS assertions
+        run: |
+          docker exec -i supabase_db_nativewind-starter \
+            psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f - < supabase/tests/rls.sql
+
+      - name: Generated types are up to date
+        run: |
+          supabase gen types typescript --local --schema public \
+            > packages/supabase/src/types.gen.ts
+          git diff --exit-code packages/supabase/src/types.gen.ts
+
+      # These scan TRACKED SOURCE only (git ls-files), never build output:
+      # .next/ bundles supabase-js, which legitimately contains these strings.
+      # They also skip comment lines, so the code may document the rule it enforces.
+      - name: No secret key behind a public env prefix
+        run: |
+          ! git ls-files -co --exclude-standard | xargs grep -InE \
+              '(NEXT_PUBLIC|EXPO_PUBLIC)_[A-Z_]*(SECRET|SERVICE_ROLE|PRIVATE|PASSWORD)'
+          ! git ls-files -co --exclude-standard -- apps packages | xargs grep -In 'sb_secret_' \
+            | grep -vE ':[[:space:]]*(//|#|\*)'
+
+      - name: No getSession() in server code
+        run: |
+          ! git ls-files -co --exclude-standard -- packages/api/src apps/web/lib apps/web/trpc \
+            | xargs grep -In 'auth\.getSession()' | grep -vE ':[[:space:]]*(//|\*)'
+
+      - name: No client-supplied identity in procedure inputs
+        run: |
+          ! git ls-files -co --exclude-standard -- packages/api/src/routers \
+            | xargs grep -InE 'z\.[a-z]+\(\)[^)]*\b(userId|user_id|authorId|ownerId|role)\b'
+
+      - run: yarn turbo run check-types build lint

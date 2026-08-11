@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/*
+ * Shared cross-platform design tokens (colours, spacing, radii, type scale).
+ * Resolved as a bare specifier: @tailwindcss/node resolves CSS @import with
+ * { extensions: [".css"], mainFields: ["style"], conditionNames: ["style"] }.
+ *
+ * NOTE: never import "nativewind/theme" here — it loads a Tailwind plugin,
+ * emits meaningless -rn-* properties, and overrides leading-* in a way that is
+ * wrong for browsers.
+ */
+@import "@repo/tokens/theme.css";
+
+/*
+ * Web-only: font family stacks are NOT portable to native, so they live here
+ * rather than in @repo/tokens. next/font sets these variables in layout.tsx.
+ */
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+}

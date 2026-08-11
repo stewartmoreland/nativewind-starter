@@ -1,0 +1,20 @@
+/*
+ * NativeWind v5 requires the SPLIT import form. `@import "tailwindcss"` is the
+ * web bundle and does not work here.
+ */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+/*
+ * Elevation scale, ios:/android:/native:/web: variants, ripple/tint utilities,
+ * safe-area utilities, per-platform system font families, and the unitless
+ * leading-* override. NATIVE ONLY — never import this into apps/web.
+ */
+@import "nativewind/theme";
+
+/*
+ * Shared cross-platform design tokens. Must come AFTER nativewind/theme so our
+ * values win. Resolved as a bare specifier through the workspace symlink.
+ */
+@import "@repo/tokens/theme.css";

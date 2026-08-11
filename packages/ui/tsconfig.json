@@ -1,0 +1,14 @@
+{
+  "extends": "@repo/typescript-config/react-library.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "strictNullChecks": true,
+    "moduleResolution": "Bundler",
+    "module": "Preserve",
+    "jsx": "react-jsx"
+  },
+  "include": ["src", "nativewind-env.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}

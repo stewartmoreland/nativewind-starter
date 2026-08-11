@@ -1,0 +1,14 @@
+{
+  "name": "@repo/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Design tokens shared by apps/web (Tailwind v4) and apps/native (NativeWind v5).",
+  "style": "./theme.css",
+  "exports": {
+    ".": "./theme.css",
+    "./theme.css": "./theme.css"
+  },
+  "files": [
+    "theme.css"
+  ]
+}

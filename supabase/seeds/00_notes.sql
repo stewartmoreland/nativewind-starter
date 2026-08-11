@@ -1,0 +1,11 @@
+-- Reference data with no dependency on auth.users goes here; it runs on every
+-- `supabase db reset`.
+--
+-- Demo USERS and their posts are NOT seeded from SQL. Inserting into auth.users
+-- by hand needs pgcrypto on the search path, breaks whenever GoTrue adds a
+-- column, and produces a confirmed account with a known password — which
+-- becomes a live credential the moment someone runs
+-- `supabase db push --include-seed`.
+--
+-- Run `yarn db:seed-auth` instead: it creates users through the local Auth
+-- Admin API and refuses to run against any non-localhost URL.

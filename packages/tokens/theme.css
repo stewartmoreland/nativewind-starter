@@ -1,0 +1,121 @@
+/*
+ * @repo/tokens — the single source of truth for colour, spacing and type scale
+ * across apps/web (Tailwind v4 + React DOM) and apps/native (NativeWind v5).
+ *
+ * Resolved by a bare specifier: `@import "@repo/tokens/theme.css"`.
+ * @tailwindcss/node resolves CSS imports with
+ *   { extensions: [".css"], mainFields: ["style"], conditionNames: ["style"] }
+ * so this file is reachable from both apps through the workspace symlink.
+ *
+ * ONLY cross-platform-safe CSS belongs here. Do NOT add:
+ *   - font-family stacks  (nativewind/theme already maps these per platform;
+ *                          a web stack names fonts that don't exist on device)
+ *   - line-height / --leading-*  (RN requires unitless; nativewind overrides it)
+ *   - grid, float, position: fixed/sticky, logical properties
+ *   - combinators, ::before/::after, cursor, outline, backdrop-filter
+ *   - anything from nativewind/theme (it must never be imported on web)
+ */
+
+:root {
+  /*
+   * react-native-css reads the compile-time rem base from :root font-size and
+   * DEFAULTS TO 14 when absent. Pinning 16 makes native's spacing and type
+   * scale line up with the browser.
+   */
+  font-size: 16px;
+
+  /* Lets the browser theme form controls, scrollbars and the canvas. */
+  color-scheme: light dark;
+
+  /* ---- palette: light ------------------------------------------------- */
+  --bg:               #ffffff;
+  --surface:          #f0f0f3;
+  --surface-selected: #e0e1e6;
+  --border:           #d8d9e0;
+  --fg:               #000000;
+  --fg-muted:         #60646c;
+  --brand:            #208aef;
+  --brand-fg:         #ffffff;
+  --danger:           #d93b30;
+  --danger-fg:        #ffffff;
+}
+
+/*
+ * Declaring every token a SECOND time here is load-bearing, not redundant:
+ * react-native-css's inlineVariables pass counts declarations per custom
+ * property and folds any declared exactly once. Two declarations keeps these
+ * as live runtime variables so the theme can flip without a reload.
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:               #000000;
+    --surface:          #212225;
+    --surface-selected: #2e3135;
+    --border:           #3a3d42;
+    --fg:               #ffffff;
+    --fg-muted:         #b0b4ba;
+    --brand:            #4da3f5;
+    --brand-fg:         #00121f;
+    --danger:           #ff6b5e;
+    --danger-fg:        #1f0704;
+  }
+}
+
+/*
+ * Manual override hook. `:root[class~="dark"]` (equivalently `.dark:root`) is
+ * the ONE class-based form react-native-css 3.0.7 implements — the `.dark *`
+ * and `<sel>:is(.dark *)` branches are commented out in its compiler, so
+ * class-driven `dark:` UTILITIES do not work on native. Swapping variables
+ * here does.
+ */
+:root[class~="dark"] {
+  --bg:               #000000;
+  --surface:          #212225;
+  --surface-selected: #2e3135;
+  --border:           #3a3d42;
+  --fg:               #ffffff;
+  --fg-muted:         #b0b4ba;
+  --brand:            #4da3f5;
+  --brand-fg:         #00121f;
+  --danger:           #ff6b5e;
+  --danger-fg:        #1f0704;
+}
+
+/*
+ * `inline` is required for colours: plain @theme emits a second layer of
+ * --color-* variables and the runtime swap above would never reach
+ * `bg-surface` / `text-fg`. `inline` writes var() straight into the utilities.
+ */
+@theme inline {
+  --color-bg:               var(--bg);
+  --color-surface:          var(--surface);
+  --color-surface-selected: var(--surface-selected);
+  --color-border:           var(--border);
+  --color-fg:               var(--fg);
+  --color-fg-muted:         var(--fg-muted);
+  --color-brand:            var(--brand);
+  --color-brand-fg:         var(--brand-fg);
+  --color-danger:           var(--danger);
+  --color-danger-fg:        var(--danger-fg);
+}
+
+/* Static scales — no runtime swap, so plain @theme is correct. */
+@theme {
+  --spacing: 0.25rem;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-card: 1.5rem;
+
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  1.875rem;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
