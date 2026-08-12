@@ -53,3 +53,11 @@ supabase/signing_keys.json
 !.yarn/plugins
 !.yarn/versions
 .pnp.*
+
+# Playwright
+/apps/web/test-results/
+/apps/web/playwright-report/
+/apps/web/blob-report/
+/apps/web/playwright/.cache/
+# Real session cookies for the demo users — same class of secret as .env.local.
+/apps/web/e2e/.auth/

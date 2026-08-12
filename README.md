@@ -47,11 +47,11 @@ yarn db:seed-auth             # demo users + posts (local only)
 yarn db:types                 # regenerate packages/supabase/src/types.gen.ts
 ```
 
-Copy the env templates and fill them from `yarn supabase status`:
+Write the env files from the running stack (`--force` to overwrite existing
+ones; see `apps/*/.env.example` for what each value is):
 
 ```bash
-cp apps/web/.env.example    apps/web/.env.local
-cp apps/native/.env.example apps/native/.env.local
+yarn env:local
 ```
 
 Demo accounts: `ada@example.com` / `alan@example.com`, password `password123`.
@@ -115,8 +115,30 @@ policy-filtered column.
 ```bash
 yarn turbo run check-types build lint
 yarn db:test-rls
+yarn test:e2e
 yarn workspace native exec expo-doctor
 ```
+
+## End-to-end tests
+
+Playwright drives `apps/web` in a real browser against the local Supabase
+stack. It seeds itself — `yarn db:start` is the only prerequisite.
+
+```bash
+yarn test:e2e         # headless, boots `next dev` (or reuses a running one)
+yarn test:e2e:ui      # interactive runner
+```
+
+Config lives in `apps/web/playwright.config.ts`, specs in `apps/web/e2e`. The
+suite covers the `/protected` gate in `proxy.ts`, the sign-in / sign-out server
+actions, RLS visibility (Ada sees her draft, Alan does not), and the
+same-origin check on `/api/trpc`.
+
+A `setup` project signs in as each demo user and caches the session in
+`apps/web/e2e/.auth/`. Those are real session cookies and are gitignored.
+
+`apps/native` is not covered — Playwright drives browsers, and this repo has no
+`react-native-web` target by design.
 
 ## Security notes
 

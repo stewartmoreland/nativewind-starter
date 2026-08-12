@@ -13,6 +13,9 @@
     "db:diff": "supabase db diff -f",
     "db:types": "supabase gen types typescript --local --schema public > packages/supabase/src/types.gen.ts",
     "db:seed-auth": "node scripts/seed-auth.mjs",
+    "env:local": "node scripts/write-env.mjs",
+    "test:e2e": "yarn workspace web test:e2e",
+    "test:e2e:ui": "yarn workspace web test:e2e:ui",
     "db:test-rls": "docker exec -i supabase_db_nativewind-starter psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f - < supabase/tests/rls.sql"
   },
   "devDependencies": {
