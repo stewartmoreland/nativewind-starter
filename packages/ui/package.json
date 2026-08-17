@@ -15,7 +15,8 @@
     "react": "19.2.3",
     "react-native": "0.86.2",
     "react-native-css": "3.0.7",
-    "react-native-safe-area-context": "~5.7.0"
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-svg": "15.15.4"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
@@ -25,14 +26,25 @@
     "react": "19.2.3",
     "react-native": "0.86.2",
     "react-native-css": "3.0.7",
+    "react-native-svg": "15.15.4",
     "typescript": "6.0.3"
   },
   "dependencies": {
+    "@rn-primitives/accordion": "^1.5.2",
+    "@rn-primitives/checkbox": "^1.5.2",
+    "@rn-primitives/collapsible": "^1.5.2",
     "@rn-primitives/label": "^1.5.2",
+    "@rn-primitives/progress": "^1.5.2",
+    "@rn-primitives/radio-group": "^1.5.2",
     "@rn-primitives/separator": "^1.5.2",
     "@rn-primitives/slot": "^1.5.2",
+    "@rn-primitives/switch": "^1.5.2",
+    "@rn-primitives/tabs": "^1.5.2",
+    "@rn-primitives/toggle": "^1.5.2",
+    "@rn-primitives/toggle-group": "^1.5.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "lucide-react-native": "^1.31.0",
     "tailwind-merge": "^3.6.0"
   }
 }

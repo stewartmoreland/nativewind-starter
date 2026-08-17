@@ -67,6 +67,19 @@ These are not style preferences — each one is load-bearing on this stack.
 9. **One component per file, kebab-case**, `Props` exported, `ref` taken as a
    plain prop (React 19 — no `forwardRef`), and `asChild` forwarded wherever the
    underlying primitive supports it.
+10. **Import icons one at a time, by path.**
+    `import Check from 'lucide-react-native/icons/check'` — kebab-case module,
+    default export. The barrel re-exports 1768 icon modules and Metro does not
+    tree-shake: its experimental pass is off by default and `metro.config.js`
+    must stay optionless. Measured on this repo, switching a single icon from
+    the deep path to `import { Check } from 'lucide-react-native'` grew the iOS
+    bundle from **5.38MB to 7.20MB (+1.82MB, +34%)**. `eslint` enforces this in
+    this package *and* in `apps/native` (the workspace Metro actually bundles);
+    the one exception it allows is `import type { LucideProps }` in `icon.tsx`,
+    which Babel erases.
+    Colour and size come from `className`, never props — `<Icon as={Check} />`
+    reads `TextClassContext` exactly as `Text` does, so a glyph inside a
+    `ghost` Button is the right colour with nothing at the call site.
 
 ## Adding a utility that only this package uses
 
@@ -82,8 +95,14 @@ emitted and the component silently renders unstyled. Keep that line.
 | `text` | `Text` + `TextClassContext` |
 | `button` | `Pressable` + `@rn-primitives/slot` |
 | `input`, `label`, `field` | `TextInput`, `@rn-primitives/label` |
-| `card`, `badge`, `skeleton` | `View` |
+| `card`, `badge`, `skeleton`, `alert` | `View` |
 | `separator` | `@rn-primitives/separator` |
+| `icon` | `lucide-react-native` + `styled()` from `react-native-css` |
+| `textarea` | `Input` with `multiline` |
+| `checkbox`, `radio-group`, `switch` | `@rn-primitives/checkbox`, `/radio-group`, `/switch` |
+| `toggle`, `toggle-group` | `@rn-primitives/toggle`, `/toggle-group` (both reuse `buttonVariants`) |
+| `progress`, `tabs` | `@rn-primitives/progress`, `/tabs` |
+| `collapsible`, `accordion` | `@rn-primitives/collapsible`, `/accordion` |
 
 `themed-text` and `themed-view` are deprecated. They remain only for the
 Expo-template screens (`explore`, `collapsible`, `hint-row`, `web-badge`) that
@@ -92,10 +111,20 @@ still use `StyleSheet` and `constants/theme.ts`.
 `apps/native/src/app/ui-kit.tsx` renders every component in every variant and
 state, and is the fastest way to check a change.
 
+## Aspect ratio needs no component
+
+`react-native-css` compiles the CSS `aspect-ratio` property straight to React
+Native's `aspectRatio` style, so `aspect-square`, `aspect-[16/9]` and
+`aspect-video` all work and `@rn-primitives/aspect-ratio` buys nothing. The
+utility is also strictly better than the primitive would be: `aspect-[16/9]` is
+overridable through `cn()`, a `ratio={16 / 9}` prop is not. Prefer the literal
+forms — `aspect-video` resolves through a `var(--aspect-video)` hop, which
+works but is one more thing that can fold.
+
 ## What is not built yet
 
-Overlays (`dialog`, `popover`, `select`, `dropdown-menu`, `tooltip`, `toast`…)
-and the remaining form and layout primitives. See **[ROADMAP.md](./ROADMAP.md)**
+Overlays (`dialog`, `popover`, `select`, `dropdown-menu`, `tooltip`, `toast`…),
+`slider`, and the remaining layout primitives. See **[ROADMAP.md](./ROADMAP.md)**
 for the full list, the order to build them in, and the prerequisites — notably
 that anything portal-based needs `@rn-primitives/portal` plus a `<PortalHost />`
 mounted as the **last** child of `apps/native/src/app/_layout.tsx`, without which

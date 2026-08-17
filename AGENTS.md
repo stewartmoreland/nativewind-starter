@@ -116,6 +116,25 @@ which is the most fragile part of this stack.
   row-ownership transfer (contrary to widely repeated advice). Declare it
   anyway: it is required the moment the two expressions differ or a second
   permissive policy is added.
+- **Never write `nativeStyleMapping: { key: true }`.** react-native-css 3.0.7
+  calls `path.split('.')` on the mapping value unconditionally
+  (`src/native/styles/index.ts`), so the `true` shorthand its own types
+  advertise is a `TypeError` the moment a style carries that key. Always use a
+  string path — `{ color: 'color' }`, as `packages/ui/src/icon.tsx` does.
+- **Do not put `text-center` / `text-right` on `Input` or `Textarea`.** Same
+  bug, upstream: the polyfilled `TextInput` maps `textAlign` with the `true`
+  shorthand, so those utilities crash on native rather than being ignored.
+- **Import lucide icons by path**, never from the barrel. Measured on this
+  repo: one barrel import grew the iOS bundle from 5.38MB to 7.20MB (+1.82MB,
+  +34%), because Metro does not tree-shake and `metro.config.js` must stay
+  optionless. Both `packages/ui`'s and `apps/native`'s eslint configs enforce
+  it — the rule has to be in both, since `apps/native` is what Metro actually
+  bundles.
+- **`react-native-reanimated` is not a `packages/ui` dependency and must not
+  become one.** react-native-css already wraps any element carrying a
+  `transition-*` / `animate-*` rule in `createAnimatedComponent`, resolving
+  Reanimated from its own location. A CSS transition in a `@repo/ui` component
+  is already Reanimated-backed.
 
 ## Expected warnings (do not "fix" these)
 

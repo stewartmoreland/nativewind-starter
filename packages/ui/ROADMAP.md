@@ -10,30 +10,49 @@ what is specific to the unbuilt components.
 
 ## Already built
 
-`lib/cn`, `lib/text-class-context`, then `text`, `button`, `input`, `label`,
-`field`, `card`, `badge`, `skeleton`, `separator`. Primitives in use:
-`@rn-primitives/slot`, `/label`, `/separator`. Gallery:
-`apps/native/src/app/ui-kit.tsx`.
+Phase 1: `lib/cn`, `lib/text-class-context`, then `text`, `button`, `input`,
+`label`, `field`, `card`, `badge`, `skeleton`, `separator`.
+
+Phase 3 (non-portal): `icon`, `checkbox`, `radio-group`, `switch`, `toggle`,
+`toggle-group`, `textarea`, `progress`, `tabs`, `collapsible`, `accordion`,
+`alert`.
+
+Primitives in use: `@rn-primitives/slot`, `/label`, `/separator`, `/checkbox`,
+`/radio-group`, `/switch`, `/toggle`, `/toggle-group`, `/progress`, `/tabs`,
+`/collapsible`, `/accordion`. Gallery: `apps/native/src/app/ui-kit.tsx`.
 
 `themed-text` and `themed-view` are deprecated but still present — see Phase 4.
 
-## Decide this before writing any Phase 2 or 3 component
+## The icon decision — made
 
-**Pick an icon library.** Checkbox needs a check mark, Select and the menu
-family need a chevron and a check, Accordion needs a chevron, Dialog needs a
-close glyph. There is no icon library in this repo today: the Expo template uses
-`expo-symbols`' `SymbolView` (which takes an imperative `tintColor`, not
-`className`) and PNG assets. Every one of those components is blocked on this,
-and the choice determines whether `icon.tsx` — deliberately not built in Phase 1
-because it would have been guesswork — is a `className` passthrough or a
-`tintColor` bridge.
+`lucide-react-native` + `react-native-svg` (pinned `15.15.4`, what Expo SDK 57's
+`bundledNativeModules.json` specifies), bridged by `packages/ui/src/icon.tsx`.
 
-The requirement is that icon colour follows `TextClassContext` like text does,
-so a chevron inside a `ghost` Button is the right colour without the call site
-saying so. A library whose components accept `className` (`lucide-react-native`
-is what react-native-reusables uses) satisfies that directly; `SymbolView` would
-need a wrapper that reads the context and resolves it to a colour, which
-reintroduces exactly the token duplication Phase 1 removed.
+The bridge is `styled()` from `react-native-css` — the sanctioned v5 API, not
+the `cssInterop` AGENTS.md bans — with
+`nativeStyleMapping: { color: 'color', width: 'size', height: 'size' }`. That
+lifts the computed values out of `style` and onto lucide's props, which is the
+only thing that works: react-native-svg's `Svg` does read `width`/`height` from
+`style`, but lucide always passes explicit `width`/`height` PROPS derived from
+`size ?? 24`, and props win — so a `size-4` left in the style is silently
+ignored and every icon renders at 24px.
+
+Two constraints discovered building it, both load-bearing:
+
+- **Mapping values must be string paths, never `true`.** react-native-css 3.0.7
+  calls `path.split('.')` on the value unconditionally, so the `true` shorthand
+  its own types advertise is a `TypeError` the moment the style carries that
+  key. (This also means `text-center` on `Input`/`Textarea` crashes — the
+  polyfilled `TextInput` maps `textAlign` with exactly that shorthand.)
+- **Import icons by path, never from the barrel.** Measured: one barrel import
+  grew the iOS bundle from 5.38MB to 7.20MB (+1.82MB, +34%), because Metro does
+  not tree-shake and `metro.config.js` must stay optionless. `eslint` enforces
+  it in `packages/ui`.
+
+`styled()` mints a new component type per call, so `icon.tsx` caches per glyph
+in a module-scope `WeakMap` — a hook-level memo would not help, since it
+memoises per instance and two sibling `<Icon as={Check} />` would still be two
+types, remounting on every swap.
 
 ## Shared prerequisites for Phase 2
 
@@ -44,12 +63,22 @@ reintroduces exactly the token duplication Phase 1 removed.
    renders **nothing, silently** — no error, no warning.
 3. On iOS, wrap the host in `FullWindowOverlay` from `react-native-screens`
    (4.26.2, already a dependency) or overlays render under the navigation bar.
-4. Add `react-native-reanimated` (4.5.1, already in `apps/native`) to
-   `packages/ui` peers, and build a `native-only-animated-view.tsx` shim so
-   enter/exit animation runs on native and is a no-op on web. Do **not** reach
-   for `tailwindcss-animate` — react-native-css does not implement `animate-in`.
-   Tailwind's own keyframe utilities do work; `animate-pulse` is verified in
-   `skeleton.tsx`.
+4. **Do NOT add `react-native-reanimated` to `packages/ui` peers.** The earlier
+   version of this prerequisite said to, and it was wrong: react-native-css
+   already *is* the Reanimated layer. `src/native/reanimated.ts` lazily
+   `require`s Reanimated and wraps the element in `createAnimatedComponent`,
+   and `useNativeCss.ts` triggers that whenever the compiler flags a rule
+   carrying an `animation*` **or `transition*`** property. So
+   `transition-transform duration-200 ease-standard` — used by the `accordion`
+   and `collapsible` chevrons and the `switch` thumb — animates through
+   Reanimated with no import, no peer and no worklet we author, exactly as
+   `animate-pulse` already does in `skeleton.tsx`. Adding the peer would
+   declare a dependency the package never imports.
+   Do **not** reach for `tailwindcss-animate` either — react-native-css does
+   not implement `animate-in`. Tailwind's own keyframe utilities do work.
+   A `native-only-animated-view.tsx` shim is only worth building if a Phase 2
+   overlay needs an enter/exit animation that a CSS keyframe cannot express;
+   nothing in Phase 3 needed one.
 5. `--overlay` and `--ring` already exist in `packages/tokens/theme.css`. Any
    further token must be declared in **all three** blocks (`:root`, the
    `prefers-color-scheme` media query, and `:root[class~="dark"]`) or
@@ -76,34 +105,42 @@ prerequisites above. Version is 1.5.2 across the board.
 
 ## Phase 3 — the rest
 
-None need a portal.
+None need a portal. Everything except `slider` is **built**; see "Already
+built" above.
 
-| Component | Primitive | Notes |
+| Component | Primitive | Status |
 |---|---|---|
-| `checkbox` | `@rn-primitives/checkbox` | Blocked on the icon decision. |
-| `radio-group` | `@rn-primitives/radio-group` | Indicator can be a plain filled `View` — buildable before icons. |
-| `switch` | `@rn-primitives/switch` | Note this is *not* RN's `Switch`; react-native-css also polyfills that one, so keep the imports straight. |
-| `slider` | `@rn-primitives/slider` | |
-| `progress` | `@rn-primitives/progress` | |
-| `tabs` | `@rn-primitives/tabs` | Distinct from `expo-router`'s `NativeTabs` used for app navigation. |
-| `accordion` | `@rn-primitives/accordion` | Chevron — icon decision. Wants animated height (Reanimated). |
-| `collapsible` | `@rn-primitives/collapsible` | Would replace `apps/native/src/components/ui/collapsible.tsx`. |
-| `toggle`, `toggle-group` | `@rn-primitives/toggle`, `/toggle-group` | Reuse `buttonVariants` rather than a parallel map. |
-| `toolbar` | `@rn-primitives/toolbar` | |
-| `avatar` | `@rn-primitives/avatar` | **No `.web.tsx`.** Known upstream Storybook breakage. |
-| `aspect-ratio` | `@rn-primitives/aspect-ratio` | **No `.web.tsx`.** Thin enough that `aspect-*` utilities may be enough — check before adding a dependency. |
-| `table` | `@rn-primitives/table` | **No `.web.tsx`.** Open upstream issue on the `scope` prop. |
+| `checkbox` | `@rn-primitives/checkbox` | Built. `Root` + `Indicator`, controlled; Indicator renders `null` when unchecked. |
+| `radio-group` | `@rn-primitives/radio-group` | Built. Exports **no** context hook, unlike `toggle-group`, so the wrapper publishes its own value context to colour the selected ring. Indicator is a plain filled `View`. |
+| `switch` | `@rn-primitives/switch` | Built. Still *not* RN's `Switch` — react-native-css polyfills that one too, and the wrong import renders a plausible-looking system control rather than erroring. The primitive does no layout or animation; the 20px thumb travel is ours. |
+| `slider` | `@rn-primitives/slider` | **Not built.** The primitive ships **no gesture handling at all** — `Track` only adds screen-reader `accessibilityActions`, and `Range`/`Thumb` are bare `View`s. Dragging means hand-written `PanResponder` (or gesture-handler) plus `onLayout` measurement. Note also its `value` is a `number` while `onValueChange` gives `number[]`. |
+| `progress` | `@rn-primitives/progress` | Built. Indeterminate on `value={null}`; the width is the one justified inline style, since a runtime percentage can never be a Tailwind class. |
+| `tabs` | `@rn-primitives/tabs` | Built. Controlled-only. Selected state comes from `useRootContext()` compared against the trigger's `value` — there is no render prop. Distinct from `expo-router`'s `NativeTabs`. |
+| `accordion` | `@rn-primitives/accordion` | Built. Chevron state from `useItemContext().isExpanded`. **No animated height**: Content unmounts when collapsed, so there is nothing to interpolate and no `height: auto` to animate to. The chevron rotation is a class change on a mounted element, so it animates for free. |
+| `collapsible` | `@rn-primitives/collapsible` | Built. Exports **no** context hook, so the wrapper owns `open` and drives the Root controlled. Does **not** replace `apps/native/src/components/ui/collapsible.tsx` — that is a convenience wrapper with a different API, and it retires with `explore.tsx` in Phase 4. |
+| `toggle`, `toggle-group` | `@rn-primitives/toggle`, `/toggle-group` | Built. Both map `(variant, pressed)` onto existing `buttonVariants` rather than a parallel table. `toggle-group` *does* export `useRootContext()` + `utils.getIsSelected()`. |
+| `toolbar` | `@rn-primitives/toolbar` | Not built. |
+| `avatar` | `@rn-primitives/avatar` | Not built. **No `.web.tsx`.** Known upstream Storybook breakage. |
+| `table` | `@rn-primitives/table` | Not built. **No `.web.tsx`.** Open upstream issue on the `scope` prop. |
 
-Components with no primitive behind them, worth adding to round the set out:
-`alert` (Card + `TextClassContext`, same shape as `badge`), `textarea` (`Input`
-with `multiline`), and `sheet`/bottom-sheet (no rn-primitive exists; would be
-`dialog` positioned bottom, or a separate native library — a real decision, not
-a component).
+`aspect-ratio` **needs no component and no dependency**: react-native-css
+compiles the CSS `aspect-ratio` property straight to RN's `aspectRatio`, so
+`aspect-square` / `aspect-[16/9]` / `aspect-video` all work. The utility also
+beats the primitive, because `aspect-[16/9]` is overridable through `cn()` and
+a `ratio` prop is not. Proven in the gallery.
+
+Components with no primitive behind them: `alert` (**built** — Card +
+`TextClassContext`, same shape as `badge`, `default`/`destructive` only because
+the palette has no `warning`/`success` token) and `textarea` (**built** —
+`Input` with `multiline`; `h-auto` beats Input's `h-12` through `cn()`, not
+through ordering). Still open: `sheet`/bottom-sheet — no rn-primitive exists,
+so it is `dialog` positioned bottom or a separate native library, which is a
+real decision rather than a component.
 
 "No `.web.tsx`" means the single React Native implementation also serves web
-through `react-native-web`. For a native-only library that is mostly irrelevant;
-it only shows up under `expo start --web`. Ground truth is the presence of a
-`<name>.web.js` in the package's `dist/`.
+through `react-native-web`. For a native-only library that is mostly
+irrelevant; it only shows up under `expo start --web`. Ground truth is the
+presence of a `<name>.web.js` in the package's `dist/`.
 
 ## Phase 4 — retire the duplicate theme system
 
@@ -152,8 +189,24 @@ then `constants/theme.ts`, `hooks/use-theme.ts` and both shims can be deleted.
 4. `yarn check-types` and `yarn lint` from the root.
 5. `yarn workspace native exec expo export --platform ios` succeeds, and
    `yarn why lightningcss` still reports only 1.30.1.
-6. **Run it on a device or simulator.** Phase 1 could not: there is no Xcode on
-   the machine it was built on, so it was verified by bundle inspection plus
-   `expo start --web`, which exercises the Radix-backed web path rather than the
-   native implementations. Every portal-based component in Phase 2 is
-   specifically the kind that can bundle cleanly and render nothing on device.
+6. **Run it on a device or simulator.** Phase 1 could not — no Xcode on the
+   machine it was built on — so it was verified by bundle inspection plus
+   `expo start --web`, which exercises the Radix-backed web path rather than
+   the native implementations. Phase 3 could and did.
+   The app needs a dev build (`@expo/ui`, `expo-glass-effect` and now
+   `react-native-svg` are all outside Expo Go), and `apps/native/ios` is
+   gitignored, so:
+
+   ```
+   yarn db:start && yarn db:seed-auth        # the gallery is behind the auth guard
+   yarn workspace native exec expo run:ios --device "iPhone 17 Pro"
+   ```
+
+   Then sign in as `ada@example.com` / `password123` and tap **Component
+   gallery** on the home screen. Toggle the theme *without reloading* with
+   `xcrun simctl ui booted appearance dark|light`; anything that needs a reload
+   means a token was declared in fewer than all four blocks.
+
+   Every portal-based component in Phase 2 is specifically the kind that can
+   bundle cleanly and render nothing on device, so this step is not optional
+   there.
