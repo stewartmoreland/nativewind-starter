@@ -18,3 +18,16 @@
  * values win. Resolved as a bare specifier through the workspace symlink.
  */
 @import "@repo/tokens/theme.css";
+
+/*
+ * Tailwind v4 auto-detects sources by walking up from this file and scanning
+ * the containing project, which stops at apps/native — it does not follow the
+ * workspace symlink into packages/ui. Without this, any utility used ONLY by a
+ * @repo/ui component (`bg-brand`, `text-5xl`, `rounded-card`, `animate-pulse`)
+ * is never emitted, and the component renders unstyled while the same class
+ * works fine when an app file happens to mention it too.
+ *
+ * Point at the source directory rather than the package: `node_modules` is on
+ * Tailwind's ignore list, so the symlinked path would be skipped.
+ */
+@source "../../../packages/ui/src";

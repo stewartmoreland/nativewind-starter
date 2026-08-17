@@ -25,6 +25,10 @@ function RootNavigator() {
 
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(app)" />
+        <Stack.Screen
+          name="ui-kit"
+          options={{ headerShown: true, title: 'UI kit', presentation: 'modal' }}
+        />
       </Stack.Protected>
     </Stack>
   );

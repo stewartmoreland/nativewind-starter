@@ -38,6 +38,11 @@
   --brand-fg:         #ffffff;
   --danger:           #d93b30;
   --danger-fg:        #ffffff;
+
+  /* Focus ring. Separate from --brand so a fork can tint focus independently. */
+  --ring:             #208aef;
+  /* Scrim behind dialogs and sheets. */
+  --overlay:          rgba(0, 0, 0, 0.5);
 }
 
 /*
@@ -58,6 +63,9 @@
     --brand-fg:         #00121f;
     --danger:           #ff6b5e;
     --danger-fg:        #1f0704;
+
+    --ring:             #4da3f5;
+    --overlay:          rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -79,6 +87,9 @@
   --brand-fg:         #00121f;
   --danger:           #ff6b5e;
   --danger-fg:        #1f0704;
+
+  --ring:             #4da3f5;
+  --overlay:          rgba(0, 0, 0, 0.7);
 }
 
 /*
@@ -97,6 +108,8 @@
   --color-brand-fg:         var(--brand-fg);
   --color-danger:           var(--danger);
   --color-danger-fg:        var(--danger-fg);
+  --color-ring:             var(--ring);
+  --color-overlay:          var(--overlay);
 }
 
 /* Static scales — no runtime swap, so plain @theme is correct. */
@@ -116,6 +129,8 @@
   --text-xl:   1.25rem;
   --text-2xl:  1.5rem;
   --text-3xl:  1.875rem;
+  --text-4xl:  2.25rem;
+  --text-5xl:  3rem;
 
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 }

@@ -2277,6 +2277,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@radix-ui/react-label@npm:^2.1.8":
+  version: 2.1.15
+  resolution: "@radix-ui/react-label@npm:2.1.15"
+  dependencies:
+    "@radix-ui/react-primitive": "npm:2.1.10"
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 10c0/e1ef6d359488460c2a5e16b0f6513260553dca497db4f5b7d287e5fa38b3623335ff30ede278f5c1f0187fefaa571ecaf45c23f9b26ffefb262e96592f14783b
+  languageName: node
+  linkType: hard
+
 "@radix-ui/react-portal@npm:1.1.17":
   version: 1.1.17
   resolution: "@radix-ui/react-portal@npm:1.1.17"
@@ -2361,6 +2380,25 @@ __metadata:
     "@types/react-dom":
       optional: true
   checksum: 10c0/b11083f923635d4cddd5a45c5145e8684ac8311b7a9e3970cb60a0a4f5c1ab692b502a732f02f716560e1308c2d5e9b6925fe8a9479d7aadfe0f6156809eeafb
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-separator@npm:^1.1.8":
+  version: 1.1.15
+  resolution: "@radix-ui/react-separator@npm:1.1.15"
+  dependencies:
+    "@radix-ui/react-primitive": "npm:2.1.10"
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 10c0/72c9142ad39ca620985a98eb7bc1e2a4edc7d75246003ff320e29855919b84de68c3705d68f29bb5fc51f616ddaa9265360dec7b972359d6c2422dd719bde818
   languageName: node
   linkType: hard
 
@@ -2770,11 +2808,17 @@ __metadata:
   dependencies:
     "@repo/eslint-config": "npm:*"
     "@repo/typescript-config": "npm:*"
+    "@rn-primitives/label": "npm:^1.5.2"
+    "@rn-primitives/separator": "npm:^1.5.2"
+    "@rn-primitives/slot": "npm:^1.5.2"
     "@types/react": "npm:~19.2.2"
+    class-variance-authority: "npm:^0.7.1"
+    clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.1"
     react: "npm:19.2.3"
     react-native: "npm:0.86.2"
     react-native-css: "npm:3.0.7"
+    tailwind-merge: "npm:^3.6.0"
     typescript: "npm:6.0.3"
   peerDependencies:
     nativewind: 5.0.0-preview.4
@@ -2784,6 +2828,78 @@ __metadata:
     react-native-safe-area-context: ~5.7.0
   languageName: unknown
   linkType: soft
+
+"@rn-primitives/label@npm:^1.5.2":
+  version: 1.5.2
+  resolution: "@rn-primitives/label@npm:1.5.2"
+  dependencies:
+    "@radix-ui/react-label": "npm:^2.1.8"
+    "@rn-primitives/slot": "npm:1.5.2"
+    "@rn-primitives/types": "npm:1.5.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-web: "*"
+  peerDependenciesMeta:
+    react-native:
+      optional: true
+    react-native-web:
+      optional: true
+  checksum: 10c0/73e38608459be1289b7f94b5a30f7d2da010824872792812918081a19307a34b3b901918ddb9ef84c6f83f93b123fb6a7b3bee4410a4de7dbb4cb6f7202f86fb
+  languageName: node
+  linkType: hard
+
+"@rn-primitives/separator@npm:^1.5.2":
+  version: 1.5.2
+  resolution: "@rn-primitives/separator@npm:1.5.2"
+  dependencies:
+    "@radix-ui/react-separator": "npm:^1.1.8"
+    "@rn-primitives/slot": "npm:1.5.2"
+    "@rn-primitives/types": "npm:1.5.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-web: "*"
+  peerDependenciesMeta:
+    react-native:
+      optional: true
+    react-native-web:
+      optional: true
+  checksum: 10c0/8ab8a7a75be4ac7b550c6e922c1b700c4040d4c6fef24413c00d0452084306a5987ac8c07e8985f520ed26eee4c92e8b8f967a1aa66030cc2475235e22c58b49
+  languageName: node
+  linkType: hard
+
+"@rn-primitives/slot@npm:1.5.2, @rn-primitives/slot@npm:^1.5.2":
+  version: 1.5.2
+  resolution: "@rn-primitives/slot@npm:1.5.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-web: "*"
+  peerDependenciesMeta:
+    react-native:
+      optional: true
+    react-native-web:
+      optional: true
+  checksum: 10c0/7010764bc78e1ab5c68005122e39946b6206925613ec93f49f3ef3fec94da7972c5dd8b2f90e585ca42c25b2d0080f2abeaf8b9877d520e40ab6b44d3fb5c397
+  languageName: node
+  linkType: hard
+
+"@rn-primitives/types@npm:1.5.2":
+  version: 1.5.2
+  resolution: "@rn-primitives/types@npm:1.5.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-web: "*"
+  peerDependenciesMeta:
+    react-native:
+      optional: true
+    react-native-web:
+      optional: true
+  checksum: 10c0/b27e142eeae77a59b38c114b9305dfefc41582fc538d7b31c7836f86478a14b6b4482afa44bc99e49d389306dede3d1d26eb4f458966b5b104c1a8505e37ac74
+  languageName: node
+  linkType: hard
 
 "@rtsao/scc@npm:^1.1.0":
   version: 1.1.0
@@ -4400,6 +4516,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"class-variance-authority@npm:^0.7.1":
+  version: 0.7.1
+  resolution: "class-variance-authority@npm:0.7.1"
+  dependencies:
+    clsx: "npm:^2.1.1"
+  checksum: 10c0/0f438cea22131808b99272de0fa933c2532d5659773bfec0c583de7b3f038378996d3350683426b8e9c74a6286699382106d71fbec52f0dd5fbb191792cccb5b
+  languageName: node
+  linkType: hard
+
 "cli-cursor@npm:^2.1.0":
   version: 2.1.0
   resolution: "cli-cursor@npm:2.1.0"
@@ -4438,6 +4563,13 @@ __metadata:
   version: 1.0.4
   resolution: "clone@npm:1.0.4"
   checksum: 10c0/2176952b3649293473999a95d7bebfc9dc96410f6cbd3d2595cf12fd401f63a4bf41a7adbfd3ab2ff09ed60cb9870c58c6acdd18b87767366fabfc163700f13b
+  languageName: node
+  linkType: hard
+
+"clsx@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "clsx@npm:2.1.1"
+  checksum: 10c0/c4c8eb865f8c82baab07e71bfa8897c73454881c4f99d6bc81585aecd7c441746c1399d08363dc096c550cceaf97bd4ce1e8854e1771e9998d9f94c4fe075839
   languageName: node
   linkType: hard
 
@@ -9647,6 +9779,13 @@ __metadata:
   version: 1.0.0
   resolution: "supports-preserve-symlinks-flag@npm:1.0.0"
   checksum: 10c0/6c4032340701a9950865f7ae8ef38578d8d7053f5e10518076e6554a9381fa91bd9c6850193695c141f32b21f979c985db07265a758867bac95de05f7d8aeb39
+  languageName: node
+  linkType: hard
+
+"tailwind-merge@npm:^3.6.0":
+  version: 3.6.0
+  resolution: "tailwind-merge@npm:3.6.0"
+  checksum: 10c0/a728d929f4786bcb48641db4228cc8c006a7545491783a658fb4d24d177dab960620991d17805a047309228de50ab949ca8d9e112c30183da0432367796ae186
   languageName: node
   linkType: hard
 

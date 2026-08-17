@@ -31,6 +31,12 @@ still-open Turbopack/React-Native Flow-parsing issue. Colour, spacing, radii and
 type scale stay in lockstep because both platforms compile the same
 `packages/tokens/theme.css`.
 
+`packages/ui` is a small shadcn-shaped kit: behaviour and accessibility come
+from [rn-primitives](https://rnprimitives.com), styling is Tailwind utilities
+that resolve to `packages/tokens`, and every component takes a `className` that
+overrides its defaults. See `packages/ui/README.md`, and
+`apps/native/src/app/ui-kit.tsx` for a gallery of every component and state.
+
 ## Requirements
 
 - Node >= 22.13

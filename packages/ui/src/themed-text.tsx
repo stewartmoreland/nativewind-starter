@@ -37,6 +37,8 @@ const COLORS = {
   danger: 'text-danger',
 } as const;
 
+/** @deprecated Use `Text` from `@repo/ui/text`. Kept for the Expo-template
+ * screens that have not been migrated yet. */
 export function ThemedText({
   type = 'default',
   themeColor,

@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@repo/ui/button';
-import { TextField } from '@repo/ui/text-field';
-import { ThemedText } from '@repo/ui/themed-text';
-import { ThemedView } from '@repo/ui/themed-view';
+import { Field } from '@repo/ui/field';
+import { Text } from '@repo/ui/text';
 
 import { supabase } from '@/lib/supabase';
 
@@ -59,7 +58,7 @@ export default function SignInScreen() {
   const disabled = busy !== null || email.length === 0;
 
   return (
-    <ThemedView className="flex-1">
+    <View className="flex-1 bg-bg">
       <SafeAreaView className="flex-1">
         <KeyboardAvoidingView
           className="flex-1"
@@ -67,13 +66,13 @@ export default function SignInScreen() {
         >
           <View className="flex-1 justify-center gap-6 px-6">
             <View className="gap-2">
-              <ThemedText type="title">Sign in</ThemedText>
-              <ThemedText type="small" themeColor="fgMuted">
+              <Text variant="h1">Sign in</Text>
+              <Text variant="muted">
                 Local dev: emails are captured by Mailpit, not delivered.
-              </ThemedText>
+              </Text>
             </View>
 
-            <TextField
+            <Field
               label="Email"
               value={email}
               onChangeText={setEmail}
@@ -84,7 +83,7 @@ export default function SignInScreen() {
               inputMode="email"
             />
 
-            <TextField
+            <Field
               label="Password"
               value={password}
               onChangeText={setPassword}
@@ -95,43 +94,44 @@ export default function SignInScreen() {
             />
 
             {error ? (
-              <ThemedText type="small" themeColor="danger">
+              <Text variant="small" className="text-danger" role="alert">
                 {error}
-              </ThemedText>
+              </Text>
             ) : null}
             {notice ? (
-              <ThemedText type="small" themeColor="brand">
+              <Text variant="small" className="text-brand" role="status">
                 {notice}
-              </ThemedText>
+              </Text>
             ) : null}
 
             <View className="gap-3">
               <Button
-                title="Sign in"
                 onPress={signInWithPassword}
                 loading={busy === 'password'}
                 disabled={disabled || password.length === 0}
-              />
+              >
+                <Text>Sign in</Text>
+              </Button>
               <Button
-                title="Email me a magic link"
                 variant="secondary"
                 onPress={signInWithMagicLink}
                 loading={busy === 'magic'}
                 disabled={disabled}
-              />
+              >
+                <Text>Email me a magic link</Text>
+              </Button>
               <Button
-                title="Create account"
                 variant="secondary"
                 onPress={signUp}
                 loading={busy === 'signup'}
                 disabled={disabled || password.length === 0}
-              />
+              >
+                <Text>Create account</Text>
+              </Button>
             </View>
-
-            {busy ? <ActivityIndicator /> : null}
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   );
 }

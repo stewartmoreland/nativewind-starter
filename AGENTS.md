@@ -36,6 +36,22 @@ which is the most fragile part of this stack.
 - Do not add `nativewind/preset`, `jsxImportSource: "nativewind"`, or
   `react-native-css-interop` — all dead v4 content on an unlinked docs page.
 - Do not import `nativewind/theme` into `apps/web`.
+- Do not use a `dark:` variant in `packages/ui` or `apps/native`.
+  react-native-css 3.0.7 implements only `:root[class~="dark"]`, so `dark:`
+  utilities compile away on native while still working in the browser — the bug
+  only appears on device. Dark mode is a variable swap in `packages/tokens`.
+- Do not write a raw colour (a hex, `rgb()`, `placeholderTextColor`,
+  `tintColor`) in a `packages/ui` component. Use a token utility; react-native-css
+  maps `::placeholder`/`::selection`/`ActivityIndicator`'s colour from CSS.
+- Do not build a `className` by string concatenation in `packages/ui`. Use
+  `cn()` from `@repo/ui/lib/cn`: react-native-css resolves conflicts by
+  stylesheet order, not by position in the string, so a concatenated consumer
+  `className` silently loses.
+- Do not remove `@source "../../../packages/ui/src"` from
+  `apps/native/src/global.css`. Tailwind's source auto-detection stops at
+  `apps/native` and does not follow the workspace symlink, so without it any
+  utility used only inside `packages/ui` is never emitted and the component
+  renders unstyled.
 - Do not use `cssInterop`, `remapProps`, `vars()`, or `useColorScheme` from
   `nativewind` (all deprecated in v5). Import `useColorScheme` from `react-native`.
 - Do not add `watchFolders` / `nodeModulesPaths` to `metro.config.js` — Expo

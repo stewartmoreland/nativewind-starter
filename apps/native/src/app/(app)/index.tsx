@@ -1,10 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import { Link } from 'expo-router';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Badge } from '@repo/ui/badge';
 import { Button } from '@repo/ui/button';
-import { ThemedText } from '@repo/ui/themed-text';
-import { ThemedView } from '@repo/ui/themed-view';
+import { Card, CardHeader } from '@repo/ui/card';
+import { Skeleton } from '@repo/ui/skeleton';
+import { Text } from '@repo/ui/text';
 
 import { useTRPC } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -15,35 +18,37 @@ function MyPosts() {
   // Same router as apps/web, fully typed end to end. RLS scopes the rows.
   const { data, isPending, error } = useQuery(trpc.posts.mine.queryOptions());
 
-  if (isPending) return <ActivityIndicator />;
+  if (isPending) {
+    return (
+      <View className="gap-2">
+        <Skeleton className="h-14 w-full" />
+        <Skeleton className="h-14 w-full" />
+      </View>
+    );
+  }
   if (error) {
     return (
-      <ThemedText type="small" themeColor="danger">
+      <Text variant="small" className="text-danger" role="alert">
         {error.message}
-      </ThemedText>
+      </Text>
     );
   }
   if (data.length === 0) {
-    return (
-      <ThemedText type="small" themeColor="fgMuted">
-        No posts yet.
-      </ThemedText>
-    );
+    return <Text variant="muted">No posts yet.</Text>;
   }
 
   return (
     <View className="gap-2">
       {data.map((post) => (
-        <ThemedView
+        <View
           key={post.id}
-          type="backgroundSelected"
-          className="gap-1 rounded-md p-3"
+          className="flex-row items-center gap-3 rounded-md bg-surface-selected p-3"
         >
-          <ThemedText>{post.title}</ThemedText>
-          <ThemedText type="small" themeColor="fgMuted">
-            {post.published ? 'Published' : 'Draft'}
-          </ThemedText>
-        </ThemedView>
+          <Text className="flex-1">{post.title}</Text>
+          <Badge variant={post.published ? 'default' : 'secondary'}>
+            <Text>{post.published ? 'Published' : 'Draft'}</Text>
+          </Badge>
+        </View>
       ))}
     </View>
   );
@@ -53,33 +58,41 @@ export default function HomeScreen() {
   const { session } = useAuth();
 
   return (
-    <ThemedView className="flex-1">
+    <View className="flex-1 bg-bg">
       <SafeAreaView className="flex-1">
         <ScrollView contentContainerClassName="gap-6 p-6 pb-24">
           <View className="gap-2">
-            <ThemedText type="title">Welcome</ThemedText>
-            <ThemedText type="small" themeColor="fgMuted">
-              Signed in as {session?.user.email}
-            </ThemedText>
+            <Text variant="h1">Welcome</Text>
+            <Text variant="muted">Signed in as {session?.user.email}</Text>
           </View>
 
-          <ThemedView type="backgroundElement" className="gap-3 rounded-card p-4">
-            <ThemedText type="subtitle">Your posts</ThemedText>
-            <ThemedText type="small" themeColor="fgMuted">
-              Fetched from the same tRPC router that apps/web uses.
-            </ThemedText>
+          <Card>
+            <CardHeader>
+              <Text variant="h3">Your posts</Text>
+              <Text variant="muted">
+                Fetched from the same tRPC router that apps/web uses.
+              </Text>
+            </CardHeader>
             <MyPosts />
-          </ThemedView>
+          </Card>
+
+          {/* `asChild` lets expo-router own the press behaviour. */}
+          <Link href="/ui-kit" asChild>
+            <Button variant="outline">
+              <Text>Component gallery</Text>
+            </Button>
+          </Link>
 
           <Button
-            title="Sign out"
             variant="secondary"
             onPress={() => {
               void supabase.auth.signOut();
             }}
-          />
+          >
+            <Text>Sign out</Text>
+          </Button>
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   );
 }
