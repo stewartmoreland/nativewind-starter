@@ -4,6 +4,9 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
+import { UiPortalHost } from '@repo/ui/portal';
+import { ToastProvider } from '@repo/ui/toast';
+
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { TRPCReactProvider } from '@/lib/api';
@@ -41,8 +44,24 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
         <TRPCReactProvider>
-          <AnimatedSplashOverlay />
-          <RootNavigator />
+          {/*
+            Wraps the navigator so useToast() resolves from any screen. Its
+            position does not affect paint order — the stack reaches the host
+            through a Portal — so it does not compete with UiPortalHost below.
+          */}
+          <ToastProvider>
+            <AnimatedSplashOverlay />
+            <RootNavigator />
+          </ToastProvider>
+          {/*
+            LAST child, always. Portalled overlays render HERE rather than where
+            their <Dialog> lives, so this position decides both paint order and
+            which React contexts they inherit — and without a host mounted they
+            render nothing at all, silently. On iOS UiPortalHost wraps itself in
+            FullWindowOverlay so overlays clear the navigation bar and any
+            `presentation: 'modal'` screen (which the UI kit route is).
+          */}
+          <UiPortalHost />
         </TRPCReactProvider>
       </AuthProvider>
     </ThemeProvider>

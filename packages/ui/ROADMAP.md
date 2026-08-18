@@ -17,6 +17,10 @@ Phase 3 (non-portal): `icon`, `checkbox`, `radio-group`, `switch`, `toggle`,
 `toggle-group`, `textarea`, `progress`, `tabs`, `collapsible`, `accordion`,
 `alert`.
 
+Phase 2 (overlays): `portal`, `dialog`, `alert-dialog`, `sheet`, `popover`,
+`dropdown-menu`, `context-menu`, `select`, `tooltip`, `toast`. All rendered on
+an iPhone 17 Pro simulator, light and dark.
+
 Primitives in use: `@rn-primitives/slot`, `/label`, `/separator`, `/checkbox`,
 `/radio-group`, `/switch`, `/toggle`, `/toggle-group`, `/progress`, `/tabs`,
 `/collapsible`, `/accordion`. Gallery: `apps/native/src/app/ui-kit.tsx`.
@@ -54,15 +58,16 @@ in a module-scope `WeakMap` — a hook-level memo would not help, since it
 memoises per instance and two sibling `<Icon as={Check} />` would still be two
 types, remounting on every swap.
 
-## Shared prerequisites for Phase 2
+## Shared prerequisites for Phase 2 — DONE
 
-1. `yarn workspace @repo/ui add @rn-primitives/portal` — it was installed for
-   the spike and removed again once nothing shipped used it.
-2. Mount `<PortalHost />` as the **last** child of
+1. `@rn-primitives/portal` is installed, along with the nine leaf primitives.
+2. `<UiPortalHost />` (from `@repo/ui/portal`) is the **last** child of
    `apps/native/src/app/_layout.tsx`. Without it every portal-based primitive
    renders **nothing, silently** — no error, no warning.
-3. On iOS, wrap the host in `FullWindowOverlay` from `react-native-screens`
-   (4.26.2, already a dependency) or overlays render under the navigation bar.
+3. That component wraps itself in `FullWindowOverlay` from `react-native-screens`
+   on iOS, so overlays clear the navigation bar and any `presentation: 'modal'`
+   screen. The wrap is a runtime branch, not an element-type constant, because
+   react-native-screens `console.warn`s on every render off iOS.
 4. **Do NOT add `react-native-reanimated` to `packages/ui` peers.** The earlier
    version of this prerequisite said to, and it was wrong: react-native-css
    already *is* the Reanimated layer. `src/native/reanimated.ts` lazily
@@ -84,24 +89,83 @@ types, remounting on every swap.
    `prefers-color-scheme` media query, and `:root[class~="dark"]`) or
    react-native-css folds it and dark mode stops flipping.
 
-## Phase 2 — overlays
+## Phase 2 — overlays — BUILT
 
-All ten take `@rn-primitives/portal` as a peer, so all ten are blocked on the
-prerequisites above. Version is 1.5.2 across the board.
+Nine components plus `portal.tsx`, on `@rn-primitives/*@^1.5.2`
+(`portal` resolves to 1.5.3; it pulls in `zustand` as a new transitive dep).
+`menubar`, `navigation-menu` and `hover-card` were deliberately skipped — all
+three are near-useless on a phone.
 
-| Component | Primitive | Notes |
-|---|---|---|
-| `dialog` | `@rn-primitives/dialog` | Start here. Bundles and typechecks on this toolchain (verified in the Phase 1 spike) but has **never been rendered** — do that first and the rest follow the same shape. Close on overlay press via `useRootContext()`. |
-| `alert-dialog` | `@rn-primitives/alert-dialog` | Same shape as dialog, no dismiss-on-outside-press. |
-| `popover` | `@rn-primitives/popover` | Positioning props (`side`, `align`, `sideOffset`, `insets`, `avoidCollisions`) are shared with the menu family. |
-| `dropdown-menu` | `@rn-primitives/dropdown-menu` | Needs the icon decision — `ItemIndicator` for checkbox/radio items. |
-| `context-menu` | `@rn-primitives/context-menu` | Long-press on native. |
-| `menubar` | `@rn-primitives/menubar` | Lowest value on a phone; consider skipping. |
-| `navigation-menu` | `@rn-primitives/navigation-menu` | Same. |
-| `select` | `@rn-primitives/select` | Needs chevron + check icons. |
-| `tooltip` | `@rn-primitives/tooltip` | Upstream bugs: auto-flip is broken on native, and it reopens on click on web. Verify before shipping. |
-| `hover-card` | `@rn-primitives/hover-card` | Depends on `popover`; hover is a web-only interaction, so this is near-useless on a phone. |
-| `toast` | `@rn-primitives/toast` | **No `.web.tsx`** and no Radix counterpart — the least universal primitive in the set. Docs still show a PortalHost example. |
+`<UiPortalHost />` from `@repo/ui/portal` is mounted as the last child of
+`apps/native/src/app/_layout.tsx`, with `<ToastProvider>` around the navigator.
+
+### What was learned building them
+
+These cost real debugging time; none of them announce themselves.
+
+- **A sibling scrim swallows every touch aimed at the content.** Rendering
+  `<Overlay />` and `<Content>` as siblings — which is what the positioning
+  maths seems to want, since Content is placed in window coordinates — produces
+  an overlay that renders perfectly, positions perfectly, and is completely
+  inert. A Select item logged no `onTouchStart` at all. **Content must be
+  NESTED inside Overlay**, for every positioned component, exactly as the dialog
+  family does. It is safe because the scrim is `absolute inset-0` inside a
+  window-sized host, so window coordinates still line up. The same change also
+  fixed positioned overlays refusing to appear at all when their trigger was
+  inside an open Dialog.
+- **`useRelativePosition` applies an inline style, and inline beats className.**
+  On `popover` / `dropdown-menu` / `context-menu` / `select` / `tooltip`
+  Content: `absolute`, `top-*`, `left-*`, `right-*`, `bottom-*` and `max-w-*`
+  are all silently dead; `min-w-*` is the only width lever and `max-h-*` is
+  free. The gallery keeps a permanent `min-w-96` vs `max-w-24` pair as the
+  regression probe.
+- **Five of the Roots cannot be controlled.** `popover`, `dropdown-menu`,
+  `context-menu`, `select` and `tooltip` take only `onOpenChange`; `open` lives
+  in their own state. Programmatic control is the Trigger ref's `open()` /
+  `close()`. Only `dialog` and `alert-dialog` are controllable.
+- **`select`'s value is an `Option` object**, not a string, and `Item` needs
+  both `value` and `label` — `ItemText` renders `label` from context and ignores
+  children. Its `Trigger` also defaults its own `disabled` to `false` and then
+  computes `disabled ?? disabledRoot`, so `<Select disabled>` never reaches the
+  press guard; the wrapper forwards the root flag itself.
+- **The menu family's `ItemIndicator` throws** outside a `CheckboxItem` or
+  `RadioGroup`. `select`'s is safe anywhere inside an `Item`.
+- **`ContextMenuTrigger asChild` needs a pressable child.** The primitive
+  forwards only `onLongPress`, and react-native-css upgrades a View to a
+  Pressable on `onPress` alone — so slotting a `Card` gives a trigger that never
+  opens, silently.
+- **`toast`'s `Title`/`Description` render a raw RN `Text`**, not the kit's, so
+  they cannot read `TextClassContext` — they have to take their variant classes
+  directly. Its `Close` and `Action` already call `onOpenChange(false)`, so a
+  caller's `onPress` must not dismiss again.
+- **`alert-dialog`'s Overlay is a View**, which is what makes it undismissable
+  by the scrim. Do not add `onPress`: react-native-css would turn it into a
+  Pressable and quietly restore the dismissal.
+- **Colour tokens cross the portal; safe-area insets do not.** react-native-css
+  resolves `:root` variables and the colour scheme from module-scope
+  observables, so dark mode flips inside a portal wherever the host sits — but
+  `env(safe-area-inset-*)` travels through React context, so `pb-safe-offset-6`
+  on a bottom sheet only works because the host is inside `ExpoRoot`'s
+  SafeAreaProvider.
+- **Animation: none, deliberately.** Overlay Content mounts already in its final
+  state, so `transition-*` has nothing to interpolate, and the positioning hook
+  parks the first frame off-screen at `opacity: 0` anyway. The one animation in
+  the phase is the `SelectTrigger` chevron, which is outside the portal and
+  permanently mounted.
+
+### Known limitation
+
+A toast that is **already on screen** when a dialog, sheet or alert-dialog opens
+is dimmed underneath that overlay's scrim. A toast raised while the overlay is
+already open draws on top, correctly. The cause is `@rn-primitives/portal`: its
+host renders the registry with `Array.from(map.values())`, so paint order is
+registration order. Two fixes were tried on device and neither works — a
+dedicated second `PortalHost` rendered as a later sibling, and `z-50` on the
+viewport. Reordering would have to happen inside the primitive.
+
+### Still unbuilt from the original table
+
+`menubar`, `navigation-menu`, `hover-card` — skipped by choice, not blocked.
 
 ## Phase 3 — the rest
 
@@ -133,9 +197,11 @@ Components with no primitive behind them: `alert` (**built** — Card +
 `TextClassContext`, same shape as `badge`, `default`/`destructive` only because
 the palette has no `warning`/`success` token) and `textarea` (**built** —
 `Input` with `multiline`; `h-auto` beats Input's `h-12` through `cn()`, not
-through ordering). Still open: `sheet`/bottom-sheet — no rn-primitive exists,
-so it is `dialog` positioned bottom or a separate native library, which is a
-real decision rather than a component.
+through ordering). `sheet` is **built** — `@rn-primitives/dialog` anchored to an edge, which buys
+the whole component for one cva table and no new dependency. It has no drag
+gesture, deliberately: dragging means PanResponder or gesture-handler plus
+onLayout measurement plus a detent model, which is a component rather than a
+variant.
 
 "No `.web.tsx`" means the single React Native implementation also serves web
 through `react-native-web`. For a native-only library that is mostly

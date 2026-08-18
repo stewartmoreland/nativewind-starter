@@ -103,6 +103,14 @@ emitted and the component silently renders unstyled. Keep that line.
 | `toggle`, `toggle-group` | `@rn-primitives/toggle`, `/toggle-group` (both reuse `buttonVariants`) |
 | `progress`, `tabs` | `@rn-primitives/progress`, `/tabs` |
 | `collapsible`, `accordion` | `@rn-primitives/collapsible`, `/accordion` |
+| `portal` | `@rn-primitives/portal` + `FullWindowOverlay` (iOS) |
+| `dialog`, `alert-dialog` | `@rn-primitives/dialog`, `/alert-dialog` |
+| `sheet` | `@rn-primitives/dialog`, anchored to an edge |
+| `popover` | `@rn-primitives/popover` |
+| `dropdown-menu`, `context-menu` | `@rn-primitives/dropdown-menu`, `/context-menu` |
+| `select` | `@rn-primitives/select` (value is an `Option` object, not a string) |
+| `tooltip` | `@rn-primitives/tooltip` (press-toggled, auto-dismisses) |
+| `toast` | `@rn-primitives/toast` + `ToastProvider` / `useToast()` |
 
 `themed-text` and `themed-view` are deprecated. They remain only for the
 Expo-template screens (`explore`, `collapsible`, `hint-row`, `web-badge`) that
@@ -121,11 +129,26 @@ overridable through `cn()`, a `ratio={16 / 9}` prop is not. Prefer the literal
 forms — `aspect-video` resolves through a `var(--aspect-video)` hop, which
 works but is one more thing that can fold.
 
+## Overlays need a host
+
+Everything portal-based renders **nothing, silently** — no error, no warning —
+unless `<UiPortalHost />` from `@repo/ui/portal` is mounted as the **last** child
+of `apps/native/src/app/_layout.tsx`, and `<ToastProvider>` wraps the navigator
+if you use `useToast()`. That is the first thing to check when an overlay "does
+not open".
+
+Two rules matter when authoring one, both learned the hard way and both
+documented at the top of `popover.tsx`:
+
+- **Nest `Content` inside `Overlay`.** As siblings the scrim swallows every
+  touch aimed at the content, while still rendering and positioning perfectly.
+- **On positioned overlays the inline positioning style beats your classes.**
+  `absolute`, `top-*`/`left-*`/`right-*`/`bottom-*` and `max-w-*` are dead;
+  `min-w-*` is the width lever, `max-h-*` is free.
+
 ## What is not built yet
 
-Overlays (`dialog`, `popover`, `select`, `dropdown-menu`, `tooltip`, `toast`…),
-`slider`, and the remaining layout primitives. See **[ROADMAP.md](./ROADMAP.md)**
-for the full list, the order to build them in, and the prerequisites — notably
-that anything portal-based needs `@rn-primitives/portal` plus a `<PortalHost />`
-mounted as the **last** child of `apps/native/src/app/_layout.tsx`, without which
-those primitives render nothing, silently.
+`slider` — the primitive ships no gesture handling at all, so it means a
+hand-written PanResponder plus `onLayout` measurement. Plus `toolbar`, `avatar`,
+`table`, and `menubar` / `navigation-menu` / `hover-card`, all skipped as
+low-value on a phone. See **[ROADMAP.md](./ROADMAP.md)**.
