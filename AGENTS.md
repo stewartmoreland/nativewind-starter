@@ -52,6 +52,13 @@ which is the most fragile part of this stack.
   `apps/native` and does not follow the workspace symlink, so without it any
   utility used only inside `packages/ui` is never emitted and the component
   renders unstyled.
+- **Do not put a `className` on `SafeAreaView`.** It is silently dropped on
+  native: the Metro resolver rewrites `react-native-safe-area-context` to
+  react-native-css's wrapper, but that wrapper only wraps `SafeAreaProvider` —
+  `SafeAreaView` is re-exported untouched, so the class lands on a codegen'd
+  native view that has no such prop. The failure is a COLLAPSED layout, not an
+  unstyled one, because the native view sets padding but never flex. Use
+  `p-safe` / `pt-safe` / `pb-safe` on a plain `View` instead.
 - Do not use `cssInterop`, `remapProps`, `vars()`, or `useColorScheme` from
   `nativewind` (all deprecated in v5). Import `useColorScheme` from `react-native`.
 - Do not add `watchFolders` / `nodeModulesPaths` to `metro.config.js` — Expo
